@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SprintUA Lottery</title>
     <link rel="manifest" href="tonconnect-manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#0f172a">
+    <!-- Підключаємо Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
         body {
@@ -110,6 +112,12 @@
 </head>
 <body>
 
+    <script>
+        // Ініціалізація Telegram WebApp (щоб розгорталось на весь екран)
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+    </script>
+
     <div class="header">
         <div id="wallet-container"></div>
     </div>
@@ -129,10 +137,13 @@
     <script>
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://koldunleslav-ui.github.io/SprintUA/tonconnect-manifest.json',
-            buttonRootId: 'wallet-container'
+            buttonRootId: 'wallet-container',
+            // Додаємо параметр повернення назад у додаток після оплати в гаманці
+            uiPreferences: {
+                theme: 'DARK'
+            }
         });
 
-        // Ваша реальна адреса гаманця для отримання коштів
         const myWalletAddress = "UQAW61rqX6gJLIzO_opjyxTtrMB9Z9q1k1mFpTcgPcDAr5cz";
 
         const TOTAL_TICKETS = 10;
@@ -174,7 +185,7 @@
 
             buyBtn.disabled = true;
             statusElement.style.color = '#38bdf8';
-            statusElement.innerText = 'Підтвердьте транзакцію в гаманці (0.001 TON)...';
+            statusElement.innerText = 'Підтвердьте транзакцію в гаманці...';
 
             try {
                 const transaction = {
@@ -182,12 +193,11 @@
                     messages: [
                         {
                             address: myWalletAddress, 
-                            amount: "1000000" // 0.001 TON у нанотонах
+                            amount: "1000000" // 0.001 TON
                         }
                     ]
                 };
 
-                // Відправка реальної транзакції через TON Connect
                 const result = await tonConnectUI.sendTransaction(transaction);
 
                 const randomIndex = Math.floor(Math.random() * closedIndices.length);
