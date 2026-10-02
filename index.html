@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SprintUA Game</title>
     <!-- Підключення маніфесту -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="tonconnect-manifest.json">
     <meta name="theme-color" content="#2563eb">
     
     <style>
@@ -42,16 +42,16 @@
         <h1>SprintUA</h1>
         <p>Готуйтеся до забігу та підключіть гаманець!</p>
         
-        <!-- Кнопка та контейнер для гаманця TON Connect -->
+        <!-- Контейнер для кнопки гаманця TON Connect -->
         <div id="wallet-container"></div>
     </div>
 
     <!-- Підключення бібліотеки TON Connect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script>
-        // Ініціалізація віджета гаманця
+        // Ініціалізація віджета з правильним шляхом до маніфесту
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://koldunleslav-ui.github.io/SprintUA/manifest.json',
+            manifestUrl: 'https://koldunleslav-ui.github.io/SprintUA/tonconnect-manifest.json',
             buttonRootId: 'wallet-container'
         });
     </script>
