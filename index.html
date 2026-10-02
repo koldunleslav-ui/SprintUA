@@ -6,8 +6,6 @@
     <title>SprintUA Lottery</title>
     <link rel="manifest" href="tonconnect-manifest.json">
     <meta name="theme-color" content="#0f172a">
-    <!-- Підключаємо Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
         body {
@@ -112,12 +110,6 @@
 </head>
 <body>
 
-    <script>
-        // Ініціалізація Telegram WebApp (щоб розгорталось на весь екран)
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-    </script>
-
     <div class="header">
         <div id="wallet-container"></div>
     </div>
@@ -138,9 +130,9 @@
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://koldunleslav-ui.github.io/SprintUA/tonconnect-manifest.json',
             buttonRootId: 'wallet-container',
-            // Додаємо параметр повернення назад у додаток після оплати в гаманці
-            uiPreferences: {
-                theme: 'DARK'
+            // Налаштування повернення на сторінку після оплати в гаманці
+            actionsConfiguration: {
+                twaReturnUrl: 'https://koldunleslav-ui.github.io/SprintUA/'
             }
         });
 
