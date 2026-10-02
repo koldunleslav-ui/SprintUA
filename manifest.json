@@ -1,10 +1,5 @@
 {
+  "url": "https://koldunleslav-ui.github.io/SprintUA/",
   "name": "SprintUA",
-  "short_name": "SprintUA",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
-  "description": "Гра SprintUA з інтеграцією токенів UA та гаманця",
-  "icons": []
+  "iconUrl": "https://koldunleslav-ui.github.io/SprintUA/icon-192.png"
 }
