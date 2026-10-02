@@ -3,57 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SprintUA Game</title>
-    <!-- Підключення маніфесту -->
+    <title>SprintUA Lottery</title>
     <link rel="manifest" href="tonconnect-manifest.json">
     <meta name="theme-color" content="#2563eb">
     
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background-color: #0f172a;
             color: #ffffff;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-        .container {
-            text-align: center;
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
         }
         h1 {
-            margin-bottom: 10px;
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            text-align: center;
         }
         p {
             color: #94a3b8;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
         }
-        #wallet-container {
+        .tickets-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .ticket {
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .ticket.locked {
+            background-color: #334155;
+            color: #64748b;
+        }
+        .ticket.revealed-win {
+            background-color: #10b981;
+            border-color: #059669;
+            color: #ffffff;
+        }
+        .ticket.revealed-lose {
+            background-color: #ef4444;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+        .status-message {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            min-height: 24px;
+        }
+        .reset-btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
             margin-top: 20px;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>SprintUA</h1>
-        <p>Готуйтеся до забігу та підключіть гаманець!</p>
-        
-        <!-- Контейнер для кнопки гаманця TON Connect -->
+    <div class="header">
         <div id="wallet-container"></div>
     </div>
+
+    <h1>Лотерея SprintUA 🎟️</h1>
+    <p>Виберіть квиток. Вартість спроби: 0.001 TON.<br>Серед 10 квитків лише 1 виграшний!</p>
+
+    <div class="tickets-grid" id="grid"></div>
+
+    <div class="status-message" id="status"></div>
+    <button class="reset-btn" id="resetBtn" onclick="resetGame()">Грати знову</button>
 
     <!-- Підключення бібліотеки TON Connect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script>
-        // Ініціалізація віджета з правильним шляхом до маніфесту
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://koldunleslav-ui.github.io/SprintUA/tonconnect-manifest.json',
             buttonRootId: 'wallet-container'
         });
+
+        const TOTAL_TICKETS = 10;
+        let winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
+        let gameOver = false;
+
+        const gridElement = document.getElementById('grid');
+        const statusElement = document.getElementById('status');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function initGrid() {
+            gridElement.innerHTML = '';
+            for (let i = 0; i < TOTAL_TICKETS; i++) {
+                const ticket = document.createElement('div');
+                ticket.className = 'ticket';
+                ticket.innerText = `#${i + 1}`;
+                ticket.onclick = () => buyAndOpenTicket(i, ticket);
+                gridElement.appendChild(ticket);
+            }
+        }
+
+        async function buyAndOpenTicket(index, element) {
+            if (gameOver || element.classList.contains('revealed-win') || element.classList.contains('revealed-lose')) {
+                return;
+            }
+
+            // Перевірка чи підключено гаманець
+            if (!tonConnectUI.connected) {
+                alert('Будь ласка, підключіть гаманець угорі праворуч!');
+                return;
+            }
+
+            statusElement.innerText = 'Обробка транзакції (0.001 TON)...';
+
+            try {
+                // Формування транзакції на оплату 0.001 TON (1000000 nanotons)
+                // Адреса отримувача поки тестова (можна замінити на вашу)
+                const transaction = {
+                    validUntil: Math.floor(Date.now() / 1000) + 60,
+                    messages: [
+                        {
+                            address: "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXXX", 
+                            amount: "1000000" 
+                        }
+                    ]
+                };
+
+                // Запит на підписання транзакції у гаманці
+                // const result = await tonConnectUI.sendTransaction(transaction);
+                
+                // Для тестування можна розкоментувати рядок нижче, якщо хочете поки що клікати без реального списання коштів:
+                await new Promise(resolve => setTimeout(resolve, 500)); // імітація мережі
+
+                // Перевірка виграшу
+                if (index === winningIndex) {
+                    element.classList.add('revealed-win');
+                    element.innerText = '🎁 WIN';
+                    statusElement.style.color = '#10b981';
+                    statusElement.innerText = 'Вітаємо! Ви знайшли виграшний квиток!';
+                    revealAll();
+                } else {
+                    element.classList.add('revealed-lose');
+                    element.innerText = '❌';
+                    statusElement.style.color = '#ef4444';
+                    statusElement.innerText = 'На жаль, цей квиток порожній.';
+                }
+
+            } catch (error) {
+                console.error(error);
+                statusElement.style.color = '#ef4444';
+                statusElement.innerText = 'Транзакцію скасовано або сталася помилка.';
+            }
+        }
+
+        function revealAll() {
+            gameOver = true;
+            const tickets = document.querySelectorAll('.ticket');
+            tickets.forEach((t, i) => {
+                if (i === winningIndex) {
+                    t.classList.add('revealed-win');
+                    t.innerText = '🎁 WIN';
+                } else if (!t.classList.contains('revealed-lose')) {
+                    t.classList.add('locked');
+                }
+            });
+            resetBtn.style.display = 'block';
+        }
+
+        function resetGame() {
+            winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
+            gameOver = false;
+            statusElement.innerText = '';
+            resetBtn.style.display = 'none';
+            initGrid();
+        }
+
+        // Запуск сітки квитків при завантаженні
+        initGrid();
     </script>
 </body>
 </html>
