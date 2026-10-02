@@ -57,7 +57,6 @@
             font-weight: bold;
             color: #94a3b8;
             user-select: none;
-            transition: all 0.2s;
         }
         .ticket.revealed-win {
             background-color: #10b981;
@@ -79,13 +78,9 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
-            transition: transform 0.1s ease;
             margin-bottom: 15px;
             width: 100%;
             max-width: 300px;
-        }
-        .buy-btn:active {
-            transform: scale(0.96);
         }
         .buy-btn:disabled {
             background: #475569;
@@ -119,7 +114,7 @@
         <div id="wallet-container"></div>
     </div>
 
-    <h1>Фортуна SprintUA 🎟️️</h1>
+    <h1>Фортуна SprintUA 🎟</h1>
     <p>Випробуй удачу! Обери свій щасливий квиток.</p>
 
     <div class="tickets-grid" id="grid"></div>
@@ -137,8 +132,11 @@
             buttonRootId: 'wallet-container'
         });
 
+        // Ваша реальна адреса гаманця для отримання коштів
+        const myWalletAddress = "UQAW61rqX6gJLIzO_opjyxTtrMB9Z9q1k1mFpTcgPcDAr5cz";
+
         const TOTAL_TICKETS = 10;
-        let ticketsState = Array(TOTAL_TICKETS).fill(false); // false - закритий
+        let ticketsState = Array(TOTAL_TICKETS).fill(false);
         let winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
         let openedCount = 0;
         let gameOver = false;
@@ -167,7 +165,6 @@
                 return;
             }
 
-            // Знаходимо ще не відкриті квитки
             let closedIndices = [];
             for (let i = 0; i < TOTAL_TICKETS; i++) {
                 if (!ticketsState[i]) closedIndices.push(i);
@@ -177,24 +174,22 @@
 
             buyBtn.disabled = true;
             statusElement.style.color = '#38bdf8';
-            statusElement.innerText = 'Обробка транзакції (0.001 TON)...';
+            statusElement.innerText = 'Підтвердьте транзакцію в гаманці (0.001 TON)...';
 
             try {
-                // Симуляція або транзакція TON Connect
                 const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 60,
+                    validUntil: Math.floor(Date.now() / 1000) + 300,
                     messages: [
                         {
-                            address: "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXXX", 
-                            amount: "1000000" 
+                            address: myWalletAddress, 
+                            amount: "1000000" // 0.001 TON у нанотонах
                         }
                     ]
                 };
 
-                // await tonConnectUI.sendTransaction(transaction);
-                await new Promise(resolve => setTimeout(resolve, 600)); // затримка для імітації
+                // Відправка реальної транзакції через TON Connect
+                const result = await tonConnectUI.sendTransaction(transaction);
 
-                // Вибираємо випадковий із доступних закритих квитків
                 const randomIndex = Math.floor(Math.random() * closedIndices.length);
                 const chosenTicketIndex = closedIndices[randomIndex];
 
@@ -207,7 +202,7 @@
                     ticketElement.classList.add('revealed-win');
                     ticketElement.innerText = '🎁 WIN';
                     statusElement.style.color = '#10b981';
-                    statusElement.innerText = '🎉 Вітаємо! Ви знайшли виграшний квиток!';
+                    statusElement.innerText = '🎉 Вітаємо! Ви виграли!';
                     endGame(true);
                 } else {
                     ticketElement.classList.add('revealed-lose');
