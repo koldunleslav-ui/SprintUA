@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SprintUA Lottery</title>
+    <title>Радіо Удвох - Доступ до ефіру</title>
     <link rel="manifest" href="tonconnect-manifest.json">
     <meta name="theme-color" content="#0f172a">
     
@@ -17,101 +17,96 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             box-sizing: border-box;
         }
         .header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 380px;
             width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 10px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
         h1 {
-            margin: 0 0 5px 0;
+            margin: 0 0 10px 0;
             font-size: 24px;
-            text-align: center;
+            color: #f8fafc;
         }
         p {
             color: #94a3b8;
-            margin-bottom: 20px;
-            text-align: center;
             font-size: 14px;
+            margin-bottom: 25px;
+            line-height: 1.5;
         }
-        .tickets-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            max-width: 400px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .ticket {
-            background-color: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 10px;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #94a3b8;
-            cursor: pointer;
-            user-select: none;
-            transition: 0.2s;
-        }
-        .ticket:hover {
-            border-color: #2563eb;
-        }
-        .ticket.revealed-win {
-            background-color: #10b981;
-            border-color: #059669;
-            color: #ffffff;
-            cursor: default;
-        }
-        .ticket.revealed-lose {
-            background-color: #334155;
-            border-color: #475569;
-            color: #64748b;
-            cursor: default;
-        }
-        .buy-btn {
+        .action-btn {
             background: linear-gradient(135deg, #2563eb, #1d4ed8);
             color: white;
             border: none;
-            padding: 14px 28px;
+            padding: 14px 24px;
             border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
-            margin-bottom: 15px;
             width: 100%;
-            max-width: 300px;
+            transition: transform 0.1s;
         }
-        .buy-btn:disabled {
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+        .action-btn:disabled {
             background: #475569;
             cursor: not-allowed;
             box-shadow: none;
         }
-        .status-message {
-            font-size: 15px;
-            font-weight: bold;
-            margin-top: 10px;
-            text-align: center;
-            min-height: 24px;
-        }
-        .reset-btn {
-            background-color: #334155;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 15px;
+        .player-container {
             display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .radio-icon {
+            font-size: 48px;
+            margin-bottom: 5px;
+        }
+        .status-text {
+            font-size: 14px;
+            color: #38bdf8;
+            margin-top: 15px;
+            min-height: 20px;
+        }
+        /* Анімація хвиль ефіру */
+        .waves {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 30px;
+            margin: 10px 0;
+        }
+        .wave {
+            width: 4px;
+            height: 100%;
+            background-color: #38bdf8;
+            border-radius: 2px;
+            animation: pulse 1s infinite ease-in-out;
+        }
+        .wave:nth-child(2) { animation-delay: 0.2s; }
+        .wave:nth-child(3) { animation-delay: 0.4s; }
+        .wave:nth-child(4) { animation-delay: 0.6s; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
         }
     </style>
 </head>
@@ -121,15 +116,36 @@
         <div id="wallet-container"></div>
     </div>
 
-    <h1>Фортуна SprintUA 🎟</h1>
-    <p id="instruction">Спочатку купіть квиток (0.001 TON), а потім оберіть його на полі!</p>
+    <div class="card">
+        <!-- ЕКРАН БЛОКУВАННЯ (PAYWALL) -->
+        <div id="lock-screen">
+            <div class="radio-icon">🎙️</div>
+            <h1>Радіо Удвох</h1>
+            <p>Отримайте ексклюзивний доступ до прямого ефіру (пісні, поезія, радіограй) всього за 0.001 TON.</p>
+            <button class="action-btn" id="payBtn" onclick="payForAccess()">Сплатити 0.001 TON</button>
+        </div>
 
-    <div class="tickets-grid" id="grid"></div>
+        <!-- РОЗБЛОКОВАНИЙ ПЛЕЄР -->
+        <div id="player-screen" class="player-container">
+            <div class="radio-icon">📻</div>
+            <h1>У ефірі: Радіо Удвох</h1>
+            
+            <div class="waves">
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
 
-    <button class="buy-btn" id="buyBtn" onclick="buyAndGetCredit()">Купити квиток (0.001 TON)</button>
-    
-    <div class="status-message" id="status"></div>
-    <button class="reset-btn" id="resetBtn" onclick="resetGame()">Нова гра</button>
+            <audio id="audioStream" controls style="width: 100%; margin-top: 10px;">
+                <source src="https://listen4.myradio24.com/78073" type="audio/mpeg">
+                Ваш браузер не підтримує аудіопотік.
+            </audio>
+            <p style="color: #10b981; font-size: 13px; margin: 5px 0 0 0;">✔ Доступ активовано</p>
+        </div>
+
+        <div class="status-text" id="status"></div>
+    </div>
 
     <!-- Підключення бібліотеки TON Connect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
@@ -142,42 +158,23 @@
             }
         });
 
+        // Ваша адреса для отримання коштів
         const myWalletAddress = "UQAW61rqX6gJLIzO_opjyxTtrMB9Z9q1k1mFpTcgPcDAr5cz";
 
-        const TOTAL_TICKETS = 10;
-        let winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
-        let paidCredits = 0; // Скільки квитків оплачено, але ще не відкрито
-        let revealedState = Array(TOTAL_TICKETS).fill(false); // Які клітинки вже відкриті
-        let gameOver = false;
-
-        const gridElement = document.getElementById('grid');
+        const payBtn = document.getElementById('payBtn');
         const statusElement = document.getElementById('status');
-        const buyBtn = document.getElementById('buyBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const instruction = document.getElementById('instruction');
+        const lockScreen = document.getElementById('lock-screen');
+        const playerScreen = document.getElementById('player-screen');
+        const audioStream = document.getElementById('audioStream');
 
-        function initGrid() {
-            gridElement.innerHTML = '';
-            for (let i = 0; i < TOTAL_TICKETS; i++) {
-                const ticket = document.createElement('div');
-                ticket.className = 'ticket';
-                ticket.id = `ticket-${i}`;
-                ticket.innerText = `#${i + 1}`;
-                ticket.onclick = () => selectTicket(i);
-                gridElement.appendChild(ticket);
-            }
-        }
-
-        // Крок 1: Оплата квитка через гаманець
-        async function buyAndGetCredit() {
+        async function payForAccess() {
             if (!tonConnectUI.connected) {
-                alert('Будь ласка, підключіть гаманець угорі праворуч!');
+                alert('Будь ласка, підключіть гаманець у правому верхньому кутку!');
                 return;
             }
 
-            buyBtn.disabled = true;
-            statusElement.style.color = '#38bdf8';
-            statusElement.innerText = 'Підтвердьте транзакцію в гаманці (0.001 TON)...';
+            payBtn.disabled = true;
+            statusElement.innerText = 'Підтвердьте транзакцію в гаманці...';
 
             try {
                 const transaction = {
@@ -185,90 +182,29 @@
                     messages: [
                         {
                             address: myWalletAddress, 
-                            amount: "1000000" // 0.001 TON
+                            amount: "1000000" // 0.001 TON у нанотонах
                         }
                     ]
                 };
 
+                // Запит на реальну транзакцію
                 await tonConnectUI.sendTransaction(transaction);
 
-                // Оплата пройшла успішно — додаємо право відкрити квиток
-                paidCredits++;
-                buyBtn.disabled = false;
-                statusElement.style.color = '#10b981';
-                statusElement.innerText = `Оплачено! Виберіть квиток на полі (${paidCredits} доступно).`;
-                instruction.innerText = 'Натисніть на будь-який номер квитка нижче, щоб перевірити його!';
+                // Якщо все успішно — приховуємо екран оплати і показуємо плеєр
+                statusElement.innerText = '';
+                lockScreen.style.display = 'none';
+                playerScreen.style.display = 'flex';
+
+                // Автоматичний запуск потоку (де дозволено браузерами)
+                audioStream.play().catch(e => console.log("Автозапуск заблоковано браузером, натисніть Play."));
 
             } catch (error) {
                 console.error(error);
                 statusElement.style.color = '#ef4444';
                 statusElement.innerText = 'Транзакцію скасовано.';
-                buyBtn.disabled = false;
+                payBtn.disabled = false;
             }
         }
-
-        // Крок 2: Клієнт сам натискає на квиток на полі
-        function selectTicket(index) {
-            if (gameOver) return;
-
-            if (paidCredits <= 0) {
-                alert('Спочатку сплатіть квиток кнопкою вище!');
-                return;
-            }
-
-            if (revealedState[index]) {
-                alert('Цей квиток уже відкритий!');
-                return;
-            }
-
-            // Використовуємо один оплачений кредит
-            paidCredits--;
-            revealedState[index] = true;
-
-            const ticketElement = document.getElementById(`ticket-${index}`);
-
-            if (index === winningIndex) {
-                ticketElement.classList.add('revealed-win');
-                ticketElement.innerText = '🎁 WIN';
-                statusElement.style.color = '#10b981';
-                statusElement.innerText = '🎉 Вітаємо! Ви знайшли виграшний квиток!';
-                endGame(true);
-            } else {
-                ticketElement.classList.add('revealed-lose');
-                ticketElement.innerText = '❌';
-                statusElement.style.color = '#94a3b8';
-                
-                if (paidCredits > 0) {
-                    statusElement.innerText = `Порожньо. У вас залишилось ще ${paidCredits} спроб.`;
-                } else {
-                    statusElement.innerText = 'Порожній квиток. Купіть ще один або почніть заново.';
-                    instruction.innerText = 'Спочатку купіть квиток (0.001 TON), а потім оберіть його на полі!';
-                }
-            }
-        }
-
-        function endGame(isWin) {
-            gameOver = true;
-            buyBtn.style.display = 'none';
-            resetBtn.style.display = 'block';
-            instruction.innerText = isWin ? 'Гра завершена: виграш знайдено!' : 'Гра завершена.';
-        }
-
-        function resetGame() {
-            // Перетасовуємо виграшний квиток для нової гри в випадкове місце від 0 до 9
-            winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
-            paidCredits = 0;
-            revealedState = Array(TOTAL_TICKETS).fill(false);
-            gameOver = false;
-            statusElement.innerText = '';
-            resetBtn.style.display = 'none';
-            buyBtn.style.display = 'block';
-            buyBtn.disabled = false;
-            instruction.innerText = 'Спочатку купіть квиток (0.001 TON), а потім оберіть його на полі!';
-            initGrid();
-        }
-
-        initGrid();
     </script>
 </body>
 </html>
