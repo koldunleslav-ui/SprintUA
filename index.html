@@ -56,17 +56,24 @@
             font-size: 16px;
             font-weight: bold;
             color: #94a3b8;
+            cursor: pointer;
             user-select: none;
+            transition: 0.2s;
+        }
+        .ticket:hover {
+            border-color: #2563eb;
         }
         .ticket.revealed-win {
             background-color: #10b981;
             border-color: #059669;
             color: #ffffff;
+            cursor: default;
         }
         .ticket.revealed-lose {
             background-color: #334155;
             border-color: #475569;
             color: #64748b;
+            cursor: default;
         }
         .buy-btn {
             background: linear-gradient(135deg, #2563eb, #1d4ed8);
@@ -115,14 +122,14 @@
     </div>
 
     <h1>Фортуна SprintUA 🎟</h1>
-    <p>Випробуй удачу! Обери свій щасливий квиток.</p>
+    <p id="instruction">Спочатку купіть квиток (0.001 TON), а потім оберіть його на полі!</p>
 
     <div class="tickets-grid" id="grid"></div>
 
-    <button class="buy-btn" id="buyBtn" onclick="buyTicket()">Купити квиток (0.001 TON)</button>
+    <button class="buy-btn" id="buyBtn" onclick="buyAndGetCredit()">Купити квиток (0.001 TON)</button>
     
     <div class="status-message" id="status"></div>
-    <button class="reset-btn" id="resetBtn" onclick="resetGame()">Спробувати ще раз</button>
+    <button class="reset-btn" id="resetBtn" onclick="resetGame()">Нова гра</button>
 
     <!-- Підключення бібліотеки TON Connect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
@@ -130,7 +137,6 @@
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://koldunleslav-ui.github.io/SprintUA/tonconnect-manifest.json',
             buttonRootId: 'wallet-container',
-            // Налаштування повернення на сторінку після оплати в гаманці
             actionsConfiguration: {
                 twaReturnUrl: 'https://koldunleslav-ui.github.io/SprintUA/'
             }
@@ -139,15 +145,16 @@
         const myWalletAddress = "UQAW61rqX6gJLIzO_opjyxTtrMB9Z9q1k1mFpTcgPcDAr5cz";
 
         const TOTAL_TICKETS = 10;
-        let ticketsState = Array(TOTAL_TICKETS).fill(false);
         let winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
-        let openedCount = 0;
+        let paidCredits = 0; // Скільки квитків оплачено, але ще не відкрито
+        let revealedState = Array(TOTAL_TICKETS).fill(false); // Які клітинки вже відкриті
         let gameOver = false;
 
         const gridElement = document.getElementById('grid');
         const statusElement = document.getElementById('status');
         const buyBtn = document.getElementById('buyBtn');
         const resetBtn = document.getElementById('resetBtn');
+        const instruction = document.getElementById('instruction');
 
         function initGrid() {
             gridElement.innerHTML = '';
@@ -156,28 +163,21 @@
                 ticket.className = 'ticket';
                 ticket.id = `ticket-${i}`;
                 ticket.innerText = `#${i + 1}`;
+                ticket.onclick = () => selectTicket(i);
                 gridElement.appendChild(ticket);
             }
         }
 
-        async function buyTicket() {
-            if (gameOver) return;
-
+        // Крок 1: Оплата квитка через гаманець
+        async function buyAndGetCredit() {
             if (!tonConnectUI.connected) {
                 alert('Будь ласка, підключіть гаманець угорі праворуч!');
                 return;
             }
 
-            let closedIndices = [];
-            for (let i = 0; i < TOTAL_TICKETS; i++) {
-                if (!ticketsState[i]) closedIndices.push(i);
-            }
-
-            if (closedIndices.length === 0) return;
-
             buyBtn.disabled = true;
             statusElement.style.color = '#38bdf8';
-            statusElement.innerText = 'Підтвердьте транзакцію в гаманці...';
+            statusElement.innerText = 'Підтвердьте транзакцію в гаманці (0.001 TON)...';
 
             try {
                 const transaction = {
@@ -190,34 +190,14 @@
                     ]
                 };
 
-                const result = await tonConnectUI.sendTransaction(transaction);
+                await tonConnectUI.sendTransaction(transaction);
 
-                const randomIndex = Math.floor(Math.random() * closedIndices.length);
-                const chosenTicketIndex = closedIndices[randomIndex];
-
-                ticketsState[chosenTicketIndex] = true;
-                openedCount++;
-
-                const ticketElement = document.getElementById(`ticket-${chosenTicketIndex}`);
-
-                if (chosenTicketIndex === winningIndex) {
-                    ticketElement.classList.add('revealed-win');
-                    ticketElement.innerText = '🎁 WIN';
-                    statusElement.style.color = '#10b981';
-                    statusElement.innerText = '🎉 Вітаємо! Ви виграли!';
-                    endGame(true);
-                } else {
-                    ticketElement.classList.add('revealed-lose');
-                    ticketElement.innerText = '❌';
-                    statusElement.style.color = '#94a3b8';
-                    statusElement.innerText = `Квиток #${chosenTicketIndex + 1} порожній. Спробуйте ще!`;
-                    
-                    if (openedCount === TOTAL_TICKETS) {
-                        endGame(false);
-                    } else {
-                        buyBtn.disabled = false;
-                    }
-                }
+                // Оплата пройшла успішно — додаємо право відкрити квиток
+                paidCredits++;
+                buyBtn.disabled = false;
+                statusElement.style.color = '#10b981';
+                statusElement.innerText = `Оплачено! Виберіть квиток на полі (${paidCredits} доступно).`;
+                instruction.innerText = 'Натисніть на будь-який номер квитка нижче, щоб перевірити його!';
 
             } catch (error) {
                 console.error(error);
@@ -227,21 +207,64 @@
             }
         }
 
+        // Крок 2: Клієнт сам натискає на квиток на полі
+        function selectTicket(index) {
+            if (gameOver) return;
+
+            if (paidCredits <= 0) {
+                alert('Спочатку сплатіть квиток кнопкою вище!');
+                return;
+            }
+
+            if (revealedState[index]) {
+                alert('Цей квиток уже відкритий!');
+                return;
+            }
+
+            // Використовуємо один оплачений кредит
+            paidCredits--;
+            revealedState[index] = true;
+
+            const ticketElement = document.getElementById(`ticket-${index}`);
+
+            if (index === winningIndex) {
+                ticketElement.classList.add('revealed-win');
+                ticketElement.innerText = '🎁 WIN';
+                statusElement.style.color = '#10b981';
+                statusElement.innerText = '🎉 Вітаємо! Ви знайшли виграшний квиток!';
+                endGame(true);
+            } else {
+                ticketElement.classList.add('revealed-lose');
+                ticketElement.innerText = '❌';
+                statusElement.style.color = '#94a3b8';
+                
+                if (paidCredits > 0) {
+                    statusElement.innerText = `Порожньо. У вас залишилось ще ${paidCredits} спроб.`;
+                } else {
+                    statusElement.innerText = 'Порожній квиток. Купіть ще один або почніть заново.';
+                    instruction.innerText = 'Спочатку купіть квиток (0.001 TON), а потім оберіть його на полі!';
+                }
+            }
+        }
+
         function endGame(isWin) {
             gameOver = true;
             buyBtn.style.display = 'none';
             resetBtn.style.display = 'block';
+            instruction.innerText = isWin ? 'Гра завершена: виграш знайдено!' : 'Гра завершена.';
         }
 
         function resetGame() {
+            // Перетасовуємо виграшний квиток для нової гри в випадкове місце від 0 до 9
             winningIndex = Math.floor(Math.random() * TOTAL_TICKETS);
-            ticketsState = Array(TOTAL_TICKETS).fill(false);
-            openedCount = 0;
+            paidCredits = 0;
+            revealedState = Array(TOTAL_TICKETS).fill(false);
             gameOver = false;
             statusElement.innerText = '';
             resetBtn.style.display = 'none';
             buyBtn.style.display = 'block';
             buyBtn.disabled = false;
+            instruction.innerText = 'Спочатку купіть квиток (0.001 TON), а потім оберіть його на полі!';
             initGrid();
         }
 
